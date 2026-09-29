@@ -1,6 +1,6 @@
-# Fedora CLI Notes
+# Linux GNOME Configs
 
-A personal cheat sheet of terminal commands I reach for on my Fedora Linux laptop.
+A personal cheat sheet of terminal commands and configs I use on my Fedora Linux laptop (GNOME).
 Everything here is meant to be copy-pasteable — adjust names, devices, and paths to match your machine.
 
 **Tested on:** Fedora Workstation (GNOME / Wayland), `dnf5`, `systemd`, NetworkManager.
