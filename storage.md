@@ -154,6 +154,41 @@ sudo btrfs subvolume list / | grep snapshots
 
 Compression and mount options live in `/etc/fstab`, e.g. `compress=zstd:1`.
 
+## Snapshot automation (snapper)
+
+Manual `btrfs subvolume snapshot` works but manages no space and takes no scheduled
+snapshots. On Fedora's Btrfs layout, use `snapper` (plus the `btrfs-assistant` GUI if the
+CLI layout check complains):
+
+```bash
+sudo dnf install snapper btrfs-assistant
+
+sudo snapper -c root create-config /          # create a config for the root subvolume
+sudo snapper -c root create --description "before upgrade"
+sudo snapper -c root list
+
+sudo snapper -c root status 10..0             # diff between two snapshots
+sudo snapper -c root undochange 10..0         # roll changes back
+sudo snapper -c root delete <number>
+
+systemctl list-timers 'snapper*'              # timeline + cleanup timers
+```
+
+Keep an eye on pinned space (snapshots share extents but old ones hold data):
+
+```bash
+sudo snapper -c root list | tail
+sudo btrfs filesystem usage /
+```
+
+## Maintenance timers
+
+```bash
+systemctl list-timers fstrim.timer            # weekly TRIM; enabled on Fedora by default
+sudo systemctl enable --now fstrim.timer
+sudo btrfs scrub start / && sudo btrfs scrub status /   # periodic checksum verification
+```
+
 ## Swap
 
 ```bash

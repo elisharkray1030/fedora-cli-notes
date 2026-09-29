@@ -14,7 +14,9 @@ Everything here is meant to be copy-pasteable — adjust names, devices, and pat
 | [files.md](files.md) | Finding, searching, copying, archiving, permissions |
 | [networking.md](networking.md) | NetworkManager, `ip`, `ss`, DNS, SSH, firewall |
 | [hardware.md](hardware.md) | Battery, brightness, Bluetooth, touchpad, Wi-Fi, sensors |
-| [storage.md](storage.md) | Disks, mounts, `fstab`, LUKS, LVM, Btrfs |
+| [graphics.md](graphics.md) | Hybrid Intel/NVIDIA, `envycontrol`, PRIME/offload, driver overrides |
+| [storage.md](storage.md) | Disks, mounts, `fstab`, LUKS, LVM, Btrfs, snapshots |
+| [display.md](display.md) | Monitors, resolution, refresh rate, scaling, auto 120/60 Hz |
 | [desktop.md](desktop.md) | GNOME, `gsettings`, screenshots, clipboard, fonts |
 | [security.md](security.md) | SELinux, GPG, SSH keys, secrets |
 | [troubleshooting.md](troubleshooting.md) | Common laptop fixes and what to check first |

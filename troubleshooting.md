@@ -23,6 +23,27 @@ df -i /
 
 Reorder anywhere: run the "always start here" block, then jump to the matching section.
 
+## Known-benign boot noise (don't chase these)
+
+`journalctl -b -p err` on a laptop is rarely empty. These are normal:
+
+```bash
+# Lenovo/Intel firmware ACPI bugs — logged every boot, harmless
+journalctl -b -p err | grep -i 'ACPI BIOS Error'
+#   AE_NOT_FOUND       -> the firmware DSDT references a symbol it never defines
+#   AE_ALREADY_EXISTS  -> duplicate _UPC/_PLD objects in the firmware tables
+```
+
+- Fixable only by firmware, not by software:
+
+  ```bash
+  sudo fwupdmgr refresh && sudo fwupdmgr get-updates
+  ```
+
+- Other harmless lines: `i801_smbus ... SMBus is busy` (another SMBus client, often
+  `mcelog`, holds the bus), `bluetoothd: Failed to set mode`, `gkr-pam: unable to locate
+  daemon control file`, `virt/tdx: TDX not supported`.
+
 ## No network / Wi-Fi dropped
 
 ```bash
@@ -162,6 +183,24 @@ systemctl --user restart <service>
 loginctl terminate-user $USER          # nukes your session (saves work first)
 sudo reboot
 ```
+
+## GPU missing / `nvidia-smi` fails
+
+On a hybrid laptop this is usually **not** a bug — the dGPU may be intentionally off.
+
+```bash
+envycontrol --query                  # 'integrated' = dGPU disabled on purpose
+lspci | grep -i nvidia               # is the card still present?
+grep -rn nvidia /etc/modprobe.d/     # a static blacklist blocks re-enabling
+```
+
+To bring the dGPU back (then log out/in or reboot):
+
+```bash
+sudo envycontrol -s hybrid           # or -s nvidia
+```
+
+See `graphics.md` for the full picture.
 
 ## Get help effectively
 
