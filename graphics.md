@@ -20,7 +20,7 @@ envycontrol --query             # integrated | hybrid | nvidia
 sudo envycontrol -s integrated  # iGPU only; dGPU fully powered off (best battery)
 sudo envycontrol -s hybrid      # both; dGPU on demand (best balance)
 sudo envycontrol -s nvidia      # dGPU drives everything (best performance)
-# log out/in (or reboot) for a mode change to take effect
+# a mode change requires a REBOOT to take effect (see below)
 ```
 
 | Mode | What it does | `nvidia-smi` |
@@ -40,6 +40,50 @@ will silently stop `envycontrol -s hybrid` from bringing the dGPU back. If a mod
 grep -rn nvidia /etc/modprobe.d/
 cat /etc/udev/rules.d/50-remove-nvidia.rules 2>/dev/null
 ```
+
+## Turn the dGPU off / on  (reboot required)
+
+```bash
+# Which mode am I in?
+envycontrol --query
+
+# TURN OFF — iGPU only, dGPU powered down (best battery)
+sudo envycontrol -s integrated
+
+# TURN ON — both GPUs, dGPU on demand (recommended "on")
+sudo envycontrol -s hybrid
+
+# TURN ON (dGPU only) — maximum performance, worst battery
+sudo envycontrol -s nvidia
+
+# A REBOOT is required for any mode change to take effect
+sudo reboot
+```
+
+**Why a reboot and not just a logout:** `integrated` works by blacklisting the `nvidia*`
+modules and udev-removing the dGPU from PCI; the kernel modules can't be safely unloaded
+while a graphical session holds the GPU. EnvyControl prints a "reboot required" notice, and
+it's serious — a logout/login will not apply the change. `sudo systemctl reboot` works too.
+
+**Verify after rebooting:**
+
+```bash
+envycontrol --query                           # integrated | hybrid | nvidia
+nvidia-smi                                    # works in hybrid/nvidia; fails in integrated (expected)
+lsmod | grep nvidia                           # modules loaded only in hybrid/nvidia
+lspci -nnk | grep -iA3 nvidia                 # 'Kernel driver in use: nvidia' when on
+for f in /sys/bus/pci/drivers/nvidia/*/power/control; do echo "$f: $(cat "$f")"; done
+```
+
+Notes:
+- `integrated` (off) writes `/etc/modprobe.d/blacklist-nvidia.conf` +
+  `/etc/udev/rules.d/50-remove-nvidia.rules`; `hybrid`/`nvidia` (on) delete them so the
+  modules load at boot. If a switch "does nothing", check the footgun above.
+- In `hybrid`, the dGPU idles near zero power thanks to runtime PM
+  (`NVreg_DynamicPowerManagement=0x02`); the `nvidia-suspend/resume/hibernate` units are
+  already enabled.
+- After a kernel update, `akmods` rebuilds `kmod-nvidia` at boot — confirm with
+  `journalctl -u akmods --no-pager | tail`.
 
 ## Run a single app on the dGPU (hybrid mode)
 
