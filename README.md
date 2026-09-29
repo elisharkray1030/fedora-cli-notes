@@ -20,6 +20,7 @@ Everything here is meant to be copy-pasteable — adjust names, devices, and pat
 | [desktop.md](desktop.md) | GNOME, `gsettings`, screenshots, clipboard, fonts |
 | [security.md](security.md) | SELinux, GPG, SSH keys, secrets |
 | [troubleshooting.md](troubleshooting.md) | Common laptop fixes and what to check first |
+| [scripts/](scripts/) | Ready-to-use helpers (auto refresh-rate switching) |
 
 ## Conventions
 

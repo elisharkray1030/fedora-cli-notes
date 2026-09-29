@@ -59,6 +59,10 @@ The udev worker logs the failure and the display never switches.
 A `systemd --user` service **does** have the session bus, and UPower already tracks whether
 you're on battery.
 
+> **Ready-to-use copies** of the three files below live in
+> [`scripts/`](scripts/) — `auto-refresh-rate.sh`, `watch-power.sh`, and
+> `switch-refresh-rate.service`. Install notes are in the script headers.
+
 `~/.local/bin/auto-refresh-rate.sh`:
 
 ```bash
