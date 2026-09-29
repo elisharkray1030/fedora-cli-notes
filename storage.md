@@ -156,29 +156,59 @@ Compression and mount options live in `/etc/fstab`, e.g. `compress=zstd:1`.
 
 ## Snapshot automation (snapper)
 
-Manual `btrfs subvolume snapshot` works but manages no space and takes no scheduled
-snapshots. On Fedora's Btrfs layout, use `snapper` (plus the `btrfs-assistant` GUI if the
-CLI layout check complains):
+Fedora doesn't snapshot `/` by default. `snapper` (with the `btrfs-assistant` GUI) adds
+scheduled snapshots and cleanup. On a default Fedora Btrfs layout, `/` is the subvolume
+`root` and `/home` is `home`, so use one config per subvolume you want to protect.
 
 ```bash
 sudo dnf install snapper btrfs-assistant
 
-sudo snapper -c root create-config /          # create a config for the root subvolume
-sudo snapper -c root create --description "before upgrade"
-sudo snapper -c root list
+# Create a config per subvolume
+sudo snapper -c root create-config /
+sudo snapper -c home create-config /home
 
-sudo snapper -c root status 10..0             # diff between two snapshots
-sudo snapper -c root undochange 10..0         # roll changes back
-sudo snapper -c root delete <number>
+# create-config creates the timers but does NOT start them — start them now
+sudo systemctl enable --now snapper-timeline.timer snapper-cleanup.timer
+systemctl list-timers 'snapper*'
 
-systemctl list-timers 'snapper*'              # timeline + cleanup timers
+# Baseline snapshot
+sudo snapper -c root create --description "baseline after setup"
+sudo snapper -c home create --description "baseline after setup"
+
+# List without opening a pager
+sudo snapper -c root list | cat
 ```
 
-Keep an eye on pinned space (snapshots share extents but old ones hold data):
+Common operations:
 
 ```bash
-sudo snapper -c root list | tail
+sudo snapper -c root list                     # all snapshots
+sudo snapper -c root status <N>..<M>          # what changed between two snapshots
+sudo snapper -c root undochange <N>..<M>      # roll those changes back
+sudo snapper -c root delete <N>               # remove one snapshot
+sudo snapper -c root get-config               # limits / timeline settings (TIMELINE_LIMIT_*)
+```
+
+**Habit — snapshot before upgrades:**
+
+```bash
+sudo snapper -c root create --description "pre-upgrade $(date +%F)"
+sudo dnf upgrade --refresh
+```
+
+Notes:
+- Snapshots are **copy-on-write**, so they're cheap, but old ones still pin changed blocks.
+  `snapper-cleanup.timer` prunes them; tune the `TIMELINE_LIMIT_*` values via `get-config`.
+- These are for **file recovery**, not "boot into a snapshot". Booting a snapshot needs
+  `grub-btrfs`, which is not in Fedora's official repos.
+- `/boot` is a separate ext4 filesystem, so `/` snapshots don't include kernels/initramfs.
+
+Keep an eye on pinned space:
+
+```bash
+sudo snapper -c root list | cat
 sudo btrfs filesystem usage /
+journalctl -u snapper-timeline --no-pager | tail     # confirm the timeline ran
 ```
 
 ## Maintenance timers
